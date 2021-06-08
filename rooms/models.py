@@ -1,5 +1,6 @@
 from django.db import models
-from django.db.models.base import Model
+
+"""from django.db.models.base import Model"""
 from django_countries.fields import CountryField
 from core import models as core_models
 
@@ -55,7 +56,7 @@ class Photo(core_models.TimeStampedModel):
     """Photo Model Definition"""
 
     caption = models.CharField(max_length=80)
-    file = models.ImageField()
+    file = models.ImageField(upload_to="room_photos")
     room = models.ForeignKey("Room", related_name="photos", on_delete=models.CASCADE)
 
     def __str__(self):
@@ -91,3 +92,18 @@ class Room(core_models.TimeStampedModel):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        self.city = str.capitalize(self.city)
+
+        super().save(*args, **kwargs)
+
+    def total_rating(self):
+        try:
+            all_reviews = self.reviews.all()
+            all_ratings = 0
+            for review in all_reviews:
+                all_ratings += review.rating_average()
+            return round(all_ratings / len(all_reviews), 2)
+        except ZeroDivisionError:
+            return 0
